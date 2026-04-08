@@ -5,6 +5,7 @@
             //initiate datepicker
             initDatePicker($('#collisionRecordDate'));
             initTagSelector($("#collisionRecordTag"));
+            initAutoComplete(1, $("#collisionRecordModalContent"));
             $('#collisionRecordModal').modal('show');
         }
     });
@@ -28,6 +29,7 @@ function showEditCollisionRecordModal(collisionRecordId, nocache) {
             //initiate datepicker
             initDatePicker($('#collisionRecordDate'));
             initTagSelector($("#collisionRecordTag"));
+            initAutoComplete(1, $("#collisionRecordModalContent"));
             $('#collisionRecordModal').modal('show');
             bindModalInputChanges('collisionRecordModal');
             $('#collisionRecordModal').off('shown.bs.modal').on('shown.bs.modal', function () {

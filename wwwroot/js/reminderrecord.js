@@ -4,6 +4,7 @@
             $("#reminderRecordModalContent").html(data); 
             initDatePicker($('#reminderDate'), true);
             initTagSelector($("#reminderRecordTag"));
+            initAutoComplete(5, $("#reminderRecordModalContent"));
             $("#reminderRecordModal").modal("show");
             $('#reminderRecordModal').off('shown.bs.modal').on('shown.bs.modal', function () {
                 if (getGlobalConfig().useMarkDown) {
