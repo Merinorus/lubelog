@@ -5,6 +5,7 @@
             //initiate datepicker
             initDatePicker($('#serviceRecordDate'));
             initTagSelector($("#serviceRecordTag"));
+            initAutoComplete(0, $("#serviceRecordModalContent"));
             $('#serviceRecordModal').modal('show');
         }
     });
@@ -28,6 +29,7 @@ function showEditServiceRecordModal(serviceRecordId, nocache) {
             //initiate datepicker
             initDatePicker($('#serviceRecordDate'));
             initTagSelector($("#serviceRecordTag"));
+            initAutoComplete(0, $("#serviceRecordModalContent"));
             $('#serviceRecordModal').modal('show');
             bindModalInputChanges('serviceRecordModal');
             $('#serviceRecordModal').off('shown.bs.modal').on('shown.bs.modal', function () {

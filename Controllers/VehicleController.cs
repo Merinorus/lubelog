@@ -1765,6 +1765,171 @@ namespace CarCareTracker.Controllers
                 return Json(false);
             }
         }
+        [HttpGet]
+        [TypeFilter(typeof(CollaboratorFilter))]
+        public IActionResult GetAutoCompleteValues(int vehicleId, int importMode)
+        {
+            var result = new Dictionary<string, List<string>>();
+            var extraFields = new List<ExtraField>();
+            var tags = new List<string>();
+            switch ((ImportMode)importMode)
+            {
+                case ImportMode.ServiceRecord:
+                    {
+                        var records = _serviceRecordDataAccess.GetServiceRecordsByVehicleId(vehicleId).OrderByDescending(x => x.Date).ThenByDescending(x => x.Mileage).ToList();
+                        result["Description"] = records.Select(x => x.Description).Where(x => !string.IsNullOrWhiteSpace(x)).ToList();
+                        tags = records.SelectMany(x => x.Tags).ToList();
+                        extraFields = records.SelectMany(x => x.ExtraFields).ToList();
+                    }
+                    break;
+                case ImportMode.RepairRecord:
+                    {
+                        var records = _collisionRecordDataAccess.GetCollisionRecordsByVehicleId(vehicleId).OrderByDescending(x => x.Date).ThenByDescending(x => x.Mileage).ToList();
+                        result["Description"] = records.Select(x => x.Description).Where(x => !string.IsNullOrWhiteSpace(x)).ToList();
+                        tags = records.SelectMany(x => x.Tags).ToList();
+                        extraFields = records.SelectMany(x => x.ExtraFields).ToList();
+                    }
+                    break;
+                case ImportMode.ReminderRecord:
+                    {
+                        var reminderRecords = _reminderRecordDataAccess.GetReminderRecordsByVehicleId(vehicleId);
+                        var serviceRecords = _serviceRecordDataAccess.GetServiceRecordsByVehicleId(vehicleId);
+                        result["Description"] = reminderRecords.Select(x => new { x.Description, x.Date, x.Mileage })
+                            .Concat(serviceRecords.Select(x => new { x.Description, x.Date, x.Mileage }))
+                            .Where(x => !string.IsNullOrWhiteSpace(x.Description))
+                            .OrderByDescending(x => x.Date)
+                            .ThenByDescending(x => x.Mileage)
+                            .Select(x => x.Description)
+                            .ToList();
+                        tags = reminderRecords.SelectMany(x => x.Tags).ToList();
+                    }
+                    break;
+                case ImportMode.GasRecord:
+                    {
+                        var records = _gasRecordDataAccess.GetGasRecordsByVehicleId(vehicleId).OrderByDescending(x => x.Date).ThenByDescending(x => x.Mileage).ToList();
+                        tags = records.SelectMany(x => x.Tags).ToList();
+                        extraFields = records.SelectMany(x => x.ExtraFields).ToList();
+                    }
+                    break;
+                case ImportMode.TaxRecord:
+                    {
+                        var records = _taxRecordDataAccess.GetTaxRecordsByVehicleId(vehicleId).OrderByDescending(x => x.Date).ToList();
+                        result["Description"] = records.Select(x => x.Description).Where(x => !string.IsNullOrWhiteSpace(x)).ToList();
+                        tags = records.SelectMany(x => x.Tags).ToList();
+                        extraFields = records.SelectMany(x => x.ExtraFields).ToList();
+                    }
+                    break;
+                case ImportMode.UpgradeRecord:
+                    {
+                        var records = _upgradeRecordDataAccess.GetUpgradeRecordsByVehicleId(vehicleId).OrderByDescending(x => x.Date).ThenByDescending(x => x.Mileage).ToList();
+                        result["Description"] = records.Select(x => x.Description).Where(x => !string.IsNullOrWhiteSpace(x)).ToList();
+                        tags = records.SelectMany(x => x.Tags).ToList();
+                        extraFields = records.SelectMany(x => x.ExtraFields).ToList();
+                    }
+                    break;
+                case ImportMode.SupplyRecord:
+                    {
+                        var records = _supplyRecordDataAccess.GetSupplyRecordsByVehicleId(vehicleId).OrderByDescending(x => x.Date).ToList();
+                        result["Description"] = records.Select(x => x.Description).Where(x => !string.IsNullOrWhiteSpace(x)).ToList();
+                        result["PartNumber"] = records.Select(x => x.PartNumber).Where(x => !string.IsNullOrWhiteSpace(x)).Distinct().ToList();
+                        result["PartSupplier"] = records.Select(x => x.PartSupplier).Where(x => !string.IsNullOrWhiteSpace(x)).Distinct().ToList();
+                        tags = records.SelectMany(x => x.Tags).ToList();
+                        extraFields = records.SelectMany(x => x.ExtraFields).ToList();
+                    }
+                    break;
+                case ImportMode.PlanRecord:
+                    {
+                        var records = _planRecordDataAccess.GetPlanRecordsByVehicleId(vehicleId).OrderByDescending(x => x.DateCreated).ToList();
+                        result["Description"] = records.Select(x => x.Description).Where(x => !string.IsNullOrWhiteSpace(x)).ToList();
+                        extraFields = records.SelectMany(x => x.ExtraFields).ToList();
+                    }
+                    break;
+                case ImportMode.OdometerRecord:
+                    {
+                        var records = _odometerRecordDataAccess.GetOdometerRecordsByVehicleId(vehicleId).OrderByDescending(x => x.Date).ThenByDescending(x => x.Mileage).ToList();
+                        tags = records.SelectMany(x => x.Tags).ToList();
+                        extraFields = records.SelectMany(x => x.ExtraFields).ToList();
+                    }
+                    break;
+            }
+            var distinctTags = tags.Where(x => !string.IsNullOrWhiteSpace(x)).Distinct().ToList();
+            if (distinctTags.Any())
+            {
+                result["Tags"] = distinctTags;
+            }
+            // Reorder all value lists: top 3 most recent, then remainder alphabetically.
+            // Description gets additional treatment: entries containing multiple items
+            // (separated by , ; / | or newlines) are split into individual suggestions,
+            // and the original multi-item strings are moved to the end.
+            foreach (var key in result.Keys.ToList())
+            {
+                if (key == "Description")
+                {
+                    result[key] = SplitAndSortDescriptions(result[key]);
+                }
+                else
+                {
+                    result[key] = AlphabeticalSort(result[key]);
+                }
+            }
+            // Add extra field values (text type only, since other types don't benefit from autocomplete)
+            foreach (var group in extraFields.Where(x => !string.IsNullOrWhiteSpace(x.Value)).GroupBy(x => x.Name))
+            {
+                result[$"extrafield:{group.Key}"] = AlphabeticalSort(group.Select(x => x.Value).Distinct().ToList());
+            }
+            return Json(result);
+        }
+        private static List<string> AlphabeticalSort(List<string> values, int skipFirstItems = 3)
+        {
+            // Sort an array alphabetically, but leave the first items untouched
+            if (values.Count <= skipFirstItems) return values;
+            var kept = values.Take(skipFirstItems).ToList();
+            var rest = values.Skip(skipFirstItems).OrderBy(x => x, StringComparer.OrdinalIgnoreCase).ToList();
+            kept.AddRange(rest);
+            return kept;
+        }
+        // Separators require a trailing space to avoid splitting "1,5", "a/b" or "v1.2" values.
+        // Newlines always split.
+        private static readonly System.Text.RegularExpressions.Regex DescriptionSeparatorRegex =
+            new System.Text.RegularExpressions.Regex(@"[.,;/|]\s+|\r?\n", System.Text.RegularExpressions.RegexOptions.Compiled);
+        private static List<string> SplitAndSortDescriptions(List<string> recencyOrderedValues)
+        {
+            // Input is ordered by recency and may contain duplicates. Split multi-item entries
+            // on common separators into individual suggestions. Multi-item strings are only
+            // kept if they were used more than once (one-off combos are noise).
+            // Output: [top 3 recent singles] + [rest singles alphabetical] + [repeated multi-items alphabetical]
+            var singles = new List<string>();
+            var seenSingles = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var multiItemCounts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            foreach (var value in recencyOrderedValues)
+            {
+                var parts = DescriptionSeparatorRegex.Split(value)
+                    .Select(p => p.Trim())
+                    .Where(p => !string.IsNullOrWhiteSpace(p))
+                    .ToArray();
+                if (parts.Length > 1)
+                {
+                    multiItemCounts[value] = multiItemCounts.TryGetValue(value, out var c) ? c + 1 : 1;
+                    foreach (var part in parts)
+                    {
+                        if (seenSingles.Add(part))
+                        {
+                            singles.Add(part);
+                        }
+                    }
+                }
+                else if (seenSingles.Add(value))
+                {
+                    singles.Add(value);
+                }
+            }
+            var sorted = AlphabeticalSort(singles);
+            sorted.AddRange(multiItemCounts
+                .Where(kv => kv.Value > 1)
+                .Select(kv => kv.Key)
+                .OrderBy(x => x, StringComparer.OrdinalIgnoreCase));
+            return sorted;
+        }
         #endregion
     }
 }

@@ -449,6 +449,201 @@ function initDatePicker(input, futureOnly) {
         });
     }
 }
+function initAutoComplete(importMode, container) {
+    var vehicleId = GetVehicleId().vehicleId;
+    $.get('/Vehicle/GetAutoCompleteValues', { vehicleId: vehicleId, importMode: importMode }, function (data) {
+        if (!data) return;
+        for (var key in data) {
+            if (!data.hasOwnProperty(key) || data[key].length === 0) continue;
+            var input = null;
+            if (key.startsWith("extrafield:")) {
+                var fieldName = key.substring("extrafield:".length);
+                container.find(".extra-field").each(function () {
+                    var label = $(this).children("label");
+                    if (label.text() === fieldName) {
+                        input = $(this).find("input");
+                    }
+                });
+            } else if (key === "Tags") {
+                var tagDataList = $("#tagList");
+                if (tagDataList.length) {
+                    var existingTags = tagDataList.find("option").map(function () { return $(this).val(); }).get();
+                    data[key].forEach(function (val) {
+                        if (existingTags.indexOf(val) === -1) {
+                            tagDataList.append($('<option>').val(val));
+                        }
+                    });
+                }
+                continue;
+            } else if (key === "Description") {
+                input = container.find("input[id$='Description']");
+            } else if (key === "PartNumber") {
+                input = container.find("#supplyRecordPartNumber");
+            } else if (key === "PartSupplier") {
+                input = container.find("#supplyRecordSupplier");
+            }
+            if (input && input.length) {
+                if (key === "Description") {
+                    // Description uses a custom dropdown to support multi-item completion:
+                    // short suggestions are shown, clicking appends instead of replacing.
+                    bindDescriptionAutoComplete(input, data[key]);
+                } else {
+                    var listId = 'autocomplete-' + key.replace(/[^a-zA-Z0-9]/g, '-');
+                    $('#' + listId).remove();
+                    var datalist = $('<datalist>').attr('id', listId);
+                    data[key].forEach(function (val) {
+                        datalist.append($('<option>').val(val));
+                    });
+                    input.attr('list', listId);
+                    input.after(datalist);
+                }
+            }
+        }
+    });
+}
+// Keep in sync with DescriptionSeparatorRegex in VehicleController.cs
+var descriptionSeparatorRegex = /[.,;/|]\s+|\r?\n/g;
+var descriptionSeparatorTestRegex = /[.,;/|]\s+|\r?\n/;
+function bindDescriptionAutoComplete(input, values) {
+    // Remove any existing datalist attachment and disable browser autofill
+    // so the native suggestions don't overlap with our custom dropdown.
+    input.removeAttr('list');
+    input.attr('autocomplete', 'off');
+    // Create the dropdown once and append to body (absolute positioning)
+    var dropdown = $('<ul class="autocomplete-dropdown list-group"></ul>').css({
+        position: 'absolute',
+        'z-index': 9999,
+        'max-height': '200px',
+        'overflow-y': 'auto',
+        'display': 'none',
+        'margin': 0
+    });
+    $('body').append(dropdown);
+    function positionDropdown() {
+        var offset = input.offset();
+        dropdown.css({
+            top: offset.top + input.outerHeight(),
+            left: offset.left,
+            width: input.outerWidth()
+        });
+    }
+    function computePrefixAndQuery(currentValue) {
+        descriptionSeparatorRegex.lastIndex = 0;
+        var lastSepEnd = 0;
+        var m;
+        while ((m = descriptionSeparatorRegex.exec(currentValue)) !== null) {
+            lastSepEnd = m.index + m[0].length;
+        }
+        return {
+            prefix: currentValue.substring(0, lastSepEnd),
+            query: currentValue.substring(lastSepEnd)
+        };
+    }
+    var activeIndex = -1;
+    function highlight(idx) {
+        var items = dropdown.find('li');
+        items.removeClass('active');
+        if (idx >= 0 && idx < items.length) {
+            var el = items.eq(idx);
+            el.addClass('active');
+            // Scroll into view if needed
+            var elTop = el[0].offsetTop;
+            var elBottom = elTop + el.outerHeight();
+            var scrollTop = dropdown.scrollTop();
+            var viewHeight = dropdown.height();
+            if (elTop < scrollTop) {
+                dropdown.scrollTop(elTop);
+            } else if (elBottom > scrollTop + viewHeight) {
+                dropdown.scrollTop(elBottom - viewHeight);
+            }
+        }
+    }
+    function selectValue(val, prefix) {
+        var newValue = prefix + val;
+        input.val(newValue);
+        input.trigger('change'); // notify change tracker
+        dropdown.hide();
+        activeIndex = -1;
+        // Input stays focused (mousedown preventDefault / keydown). Place caret at end.
+        var el = input[0];
+        el.focus();
+        el.setSelectionRange(newValue.length, newValue.length);
+    }
+    function renderDropdown() {
+        var parsed = computePrefixAndQuery(input.val());
+        var query = parsed.query.toLowerCase();
+        var hasPrefix = parsed.prefix.length > 0;
+        var filtered = values.filter(function (val) {
+            var lower = val.toLowerCase();
+            // Exclude exact match — the user already typed/selected that value
+            if (lower === query) return false;
+            // Once the user has a prefix (added a separator), hide multi-item suggestions
+            // since clicking them would prepend the prefix and cause duplication.
+            if (hasPrefix && descriptionSeparatorTestRegex.test(val)) return false;
+            return !query || lower.indexOf(query) !== -1;
+        });
+        // Prefix matches first
+        if (query) {
+            filtered.sort(function (a, b) {
+                var aStarts = a.toLowerCase().indexOf(query) === 0 ? 0 : 1;
+                var bStarts = b.toLowerCase().indexOf(query) === 0 ? 0 : 1;
+                return aStarts - bStarts;
+            });
+        }
+        dropdown.empty();
+        activeIndex = -1;
+        if (filtered.length === 0) {
+            dropdown.hide();
+            return;
+        }
+        filtered.slice(0, 50).forEach(function (val) {
+            var item = $('<li class="list-group-item list-group-item-action"></li>')
+                .text(val)
+                .css({ cursor: 'pointer', padding: '4px 10px' });
+            item.on('mousedown', function (e) {
+                // mousedown (not click) so it fires before blur
+                e.preventDefault();
+                selectValue(val, parsed.prefix);
+            });
+            dropdown.append(item);
+        });
+        positionDropdown();
+        dropdown.show();
+    }
+    input.off('input.autocomplete focus.autocomplete blur.autocomplete keydown.autocomplete')
+        .on('input.autocomplete focus.autocomplete', renderDropdown)
+        .on('blur.autocomplete', function () {
+            // Small delay so mousedown on an item fires first
+            setTimeout(function () { dropdown.hide(); }, 150);
+        })
+        .on('keydown.autocomplete', function (e) {
+            if (dropdown.is(':hidden')) return;
+            var items = dropdown.find('li');
+            if (items.length === 0) return;
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                activeIndex = (activeIndex + 1) % items.length;
+                highlight(activeIndex);
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                activeIndex = activeIndex <= 0 ? items.length - 1 : activeIndex - 1;
+                highlight(activeIndex);
+            } else if (e.key === 'Enter') {
+                if (activeIndex >= 0) {
+                    e.preventDefault();
+                    var parsed = computePrefixAndQuery(input.val());
+                    selectValue(items.eq(activeIndex).text(), parsed.prefix);
+                }
+            } else if (e.key === 'Escape') {
+                dropdown.hide();
+                activeIndex = -1;
+            }
+        });
+    // Clean up dropdown when modal closes
+    input.closest('.modal').off('hidden.bs.modal.autocomplete').on('hidden.bs.modal.autocomplete', function () {
+        dropdown.remove();
+    });
+}
 function initTagSelector(input, noDataList) {
     if (noDataList) {
         input.tagsinput({
