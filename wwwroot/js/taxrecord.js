@@ -5,6 +5,7 @@
             //initiate datepicker
             initDatePicker($('#taxRecordDate'));
             initTagSelector($("#taxRecordTag"));
+            initAutoComplete(3, $("#taxRecordModalContent"));
             $('#taxRecordModal').modal('show');
         }
     });
@@ -28,6 +29,7 @@ function showEditTaxRecordModal(taxRecordId, nocache) {
             //initiate datepicker
             initDatePicker($('#taxRecordDate'));
             initTagSelector($("#taxRecordTag"));
+            initAutoComplete(3, $("#taxRecordModalContent"));
             $('#taxRecordModal').modal('show');
             bindModalInputChanges('taxRecordModal');
             $('#taxRecordModal').off('shown.bs.modal').on('shown.bs.modal', function () {

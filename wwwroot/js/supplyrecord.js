@@ -5,6 +5,7 @@
             //initiate datepicker
             initDatePicker($('#supplyRecordDate'));
             initTagSelector($("#supplyRecordTag"));
+            initAutoComplete(7, $("#supplyRecordModalContent"));
             $('#supplyRecordModal').modal('show');
         }
     });
@@ -28,6 +29,7 @@ function showEditSupplyRecordModal(supplyRecordId, nocache) {
             //initiate datepicker
             initDatePicker($('#supplyRecordDate'));
             initTagSelector($("#supplyRecordTag"));
+            initAutoComplete(7, $("#supplyRecordModalContent"));
             $('#supplyRecordModal').modal('show');
             bindModalInputChanges('supplyRecordModal');
             $('#supplyRecordModal').off('shown.bs.modal').on('shown.bs.modal', function () {

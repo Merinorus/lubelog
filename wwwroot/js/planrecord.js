@@ -4,6 +4,7 @@
             $("#planRecordModalContent").html(data);
             //initiate datepicker
             initDatePicker($('#planRecordDate'));
+            initAutoComplete(9, $("#planRecordModalContent"));
             $('#planRecordModal').modal('show');
         }
     });
@@ -27,6 +28,7 @@ function showEditPlanRecordModal(planRecordId, nocache) {
             $("#planRecordModalContent").html(data);
             //initiate datepicker
             initDatePicker($('#planRecordDate'));
+            initAutoComplete(9, $("#planRecordModalContent"));
             $('#planRecordModal').modal('show');
             bindModalInputChanges('planRecordModal');
             $('#planRecordModal').off('shown.bs.modal').on('shown.bs.modal', function () {

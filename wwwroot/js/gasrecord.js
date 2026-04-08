@@ -5,6 +5,7 @@
             //initiate datepicker
             initDatePicker($('#gasRecordDate'));
             initTagSelector($("#gasRecordTag"));
+            initAutoComplete(2, $("#gasRecordModalContent"));
             $('#gasRecordModal').modal('show');
         }
     });
@@ -28,6 +29,7 @@ function showEditGasRecordModal(gasRecordId, nocache) {
             //initiate datepicker
             initDatePicker($('#gasRecordDate'));
             initTagSelector($("#gasRecordTag"));
+            initAutoComplete(2, $("#gasRecordModalContent"));
             $('#gasRecordModal').modal('show');
             bindModalInputChanges('gasRecordModal');
             $('#gasRecordModal').off('shown.bs.modal').on('shown.bs.modal', function () {

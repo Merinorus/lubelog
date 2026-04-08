@@ -5,6 +5,7 @@
             //initiate datepicker
             initDatePicker($('#upgradeRecordDate'));
             initTagSelector($("#upgradeRecordTag"));
+            initAutoComplete(4, $("#upgradeRecordModalContent"));
             $('#upgradeRecordModal').modal('show');
         }
     });
@@ -28,6 +29,7 @@ function showEditUpgradeRecordModal(upgradeRecordId, nocache) {
             //initiate datepicker
             initDatePicker($('#upgradeRecordDate'));
             initTagSelector($("#upgradeRecordTag"));
+            initAutoComplete(4, $("#upgradeRecordModalContent"));
             $('#upgradeRecordModal').modal('show');
             bindModalInputChanges('upgradeRecordModal');
             $('#upgradeRecordModal').off('shown.bs.modal').on('shown.bs.modal', function () {
