@@ -1792,8 +1792,11 @@ namespace CarCareTracker.Controllers
                     result[key] = AlphabeticalSort(result[key]);
                 }
             }
-            // Add extra field values (text type only, since other types don't benefit from autocomplete)
-            foreach (var group in extraFields.Where(x => !string.IsNullOrWhiteSpace(x.Value)).GroupBy(x => x.Name))
+            // Add extra field values — only free-text types (Text, Location) benefit from autocomplete.
+            foreach (var group in extraFields
+                .Where(x => !string.IsNullOrWhiteSpace(x.Value))
+                .Where(x => x.FieldType == ExtraFieldType.Text || x.FieldType == ExtraFieldType.Location)
+                .GroupBy(x => x.Name))
             {
                 result[$"extrafield:{group.Key}"] = AlphabeticalSort(group.Select(x => x.Value).Distinct().ToList());
             }

@@ -488,9 +488,12 @@ function initAutoComplete(importMode, container) {
             }
             if (input && input.length) {
                 if (key === "Description") {
-                    // Description uses a custom dropdown to support multi-item completion:
+                    // Description uses a custom dropdown with multi-item completion:
                     // short suggestions are shown, clicking appends instead of replacing.
-                    bindDescriptionAutoComplete(input, data[key]);
+                    bindCustomAutoComplete(input, data[key], { multiItem: true });
+                } else if (key.startsWith("extrafield:")) {
+                    // Text-type extra fields get the same custom dropdown (no multi-item logic).
+                    bindCustomAutoComplete(input, data[key], { multiItem: false });
                 } else {
                     var listId = 'autocomplete-' + key.replace(/[^a-zA-Z0-9]/g, '-');
                     $('#' + listId).remove();
@@ -508,7 +511,9 @@ function initAutoComplete(importMode, container) {
 // Keep in sync with DescriptionSeparatorRegex in VehicleController.cs
 var descriptionSeparatorRegex = /[.,;/|]\s+|\r?\n/g;
 var descriptionSeparatorTestRegex = /[.,;/|]\s+|\r?\n/;
-function bindDescriptionAutoComplete(input, values) {
+function bindCustomAutoComplete(input, values, options) {
+    options = options || {};
+    var multiItem = !!options.multiItem;
     // Remove any existing datalist attachment and disable browser autofill
     // so the native suggestions don't overlap with our custom dropdown.
     input.removeAttr('list');
@@ -532,6 +537,9 @@ function bindDescriptionAutoComplete(input, values) {
         });
     }
     function computePrefixAndQuery(currentValue) {
+        if (!multiItem) {
+            return { prefix: '', query: currentValue };
+        }
         descriptionSeparatorRegex.lastIndex = 0;
         var lastSepEnd = 0;
         var m;
@@ -581,9 +589,9 @@ function bindDescriptionAutoComplete(input, values) {
             var lower = val.toLowerCase();
             // Exclude exact match — the user already typed/selected that value
             if (lower === query) return false;
-            // Once the user has a prefix (added a separator), hide multi-item suggestions
-            // since clicking them would prepend the prefix and cause duplication.
-            if (hasPrefix && descriptionSeparatorTestRegex.test(val)) return false;
+            // For multi-item fields: once the user has a prefix (added a separator),
+            // hide multi-item suggestions since clicking them would prepend the prefix.
+            if (multiItem && hasPrefix && descriptionSeparatorTestRegex.test(val)) return false;
             return !query || lower.indexOf(query) !== -1;
         });
         // Prefix matches first
