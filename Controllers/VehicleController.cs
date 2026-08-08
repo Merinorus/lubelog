@@ -1772,11 +1772,12 @@ namespace CarCareTracker.Controllers
             var result = new Dictionary<string, List<string>>();
             var extraFields = new List<ExtraField>();
             var tags = new List<string>();
+            const short limit = 500;
             switch ((ImportMode)importMode)
             {
                 case ImportMode.ServiceRecord:
                     {
-                        var records = _serviceRecordDataAccess.GetServiceRecordsByVehicleId(vehicleId).OrderByDescending(x => x.Date).ThenByDescending(x => x.Mileage).ToList();
+                        var records = _serviceRecordDataAccess.GetServiceRecordsByVehicleId(vehicleId).OrderByDescending(x => x.Date).ThenByDescending(x => x.Mileage).Take(limit).ToList();
                         result["Description"] = records.Select(x => x.Description).Where(x => !string.IsNullOrWhiteSpace(x)).ToList();
                         tags = records.SelectMany(x => x.Tags).ToList();
                         extraFields = records.SelectMany(x => x.ExtraFields).ToList();
@@ -1784,7 +1785,7 @@ namespace CarCareTracker.Controllers
                     break;
                 case ImportMode.RepairRecord:
                     {
-                        var records = _collisionRecordDataAccess.GetCollisionRecordsByVehicleId(vehicleId).OrderByDescending(x => x.Date).ThenByDescending(x => x.Mileage).ToList();
+                        var records = _collisionRecordDataAccess.GetCollisionRecordsByVehicleId(vehicleId).OrderByDescending(x => x.Date).ThenByDescending(x => x.Mileage).Take(limit).ToList();
                         result["Description"] = records.Select(x => x.Description).Where(x => !string.IsNullOrWhiteSpace(x)).ToList();
                         tags = records.SelectMany(x => x.Tags).ToList();
                         extraFields = records.SelectMany(x => x.ExtraFields).ToList();
@@ -1800,20 +1801,21 @@ namespace CarCareTracker.Controllers
                             .OrderByDescending(x => x.Date)
                             .ThenByDescending(x => x.Mileage)
                             .Select(x => x.Description)
+                            .Take(limit)
                             .ToList();
                         tags = reminderRecords.SelectMany(x => x.Tags).ToList();
                     }
                     break;
                 case ImportMode.GasRecord:
                     {
-                        var records = _gasRecordDataAccess.GetGasRecordsByVehicleId(vehicleId).OrderByDescending(x => x.Date).ThenByDescending(x => x.Mileage).ToList();
+                        var records = _gasRecordDataAccess.GetGasRecordsByVehicleId(vehicleId).OrderByDescending(x => x.Date).ThenByDescending(x => x.Mileage).Take(limit).ToList();
                         tags = records.SelectMany(x => x.Tags).ToList();
                         extraFields = records.SelectMany(x => x.ExtraFields).ToList();
                     }
                     break;
                 case ImportMode.TaxRecord:
                     {
-                        var records = _taxRecordDataAccess.GetTaxRecordsByVehicleId(vehicleId).OrderByDescending(x => x.Date).ToList();
+                        var records = _taxRecordDataAccess.GetTaxRecordsByVehicleId(vehicleId).OrderByDescending(x => x.Date).Take(limit).ToList();
                         result["Description"] = records.Select(x => x.Description).Where(x => !string.IsNullOrWhiteSpace(x)).ToList();
                         tags = records.SelectMany(x => x.Tags).ToList();
                         extraFields = records.SelectMany(x => x.ExtraFields).ToList();
@@ -1821,7 +1823,7 @@ namespace CarCareTracker.Controllers
                     break;
                 case ImportMode.UpgradeRecord:
                     {
-                        var records = _upgradeRecordDataAccess.GetUpgradeRecordsByVehicleId(vehicleId).OrderByDescending(x => x.Date).ThenByDescending(x => x.Mileage).ToList();
+                        var records = _upgradeRecordDataAccess.GetUpgradeRecordsByVehicleId(vehicleId).OrderByDescending(x => x.Date).ThenByDescending(x => x.Mileage).Take(limit).ToList();
                         result["Description"] = records.Select(x => x.Description).Where(x => !string.IsNullOrWhiteSpace(x)).ToList();
                         tags = records.SelectMany(x => x.Tags).ToList();
                         extraFields = records.SelectMany(x => x.ExtraFields).ToList();
@@ -1829,7 +1831,7 @@ namespace CarCareTracker.Controllers
                     break;
                 case ImportMode.SupplyRecord:
                     {
-                        var records = _supplyRecordDataAccess.GetSupplyRecordsByVehicleId(vehicleId).OrderByDescending(x => x.Date).ToList();
+                        var records = _supplyRecordDataAccess.GetSupplyRecordsByVehicleId(vehicleId).OrderByDescending(x => x.Date).Take(limit).ToList();
                         result["Description"] = records.Select(x => x.Description).Where(x => !string.IsNullOrWhiteSpace(x)).ToList();
                         result["PartNumber"] = records.Select(x => x.PartNumber).Where(x => !string.IsNullOrWhiteSpace(x)).Distinct().ToList();
                         result["PartSupplier"] = records.Select(x => x.PartSupplier).Where(x => !string.IsNullOrWhiteSpace(x)).Distinct().ToList();
@@ -1839,20 +1841,20 @@ namespace CarCareTracker.Controllers
                     break;
                 case ImportMode.PlanRecord:
                     {
-                        var records = _planRecordDataAccess.GetPlanRecordsByVehicleId(vehicleId).OrderByDescending(x => x.DateCreated).ToList();
+                        var records = _planRecordDataAccess.GetPlanRecordsByVehicleId(vehicleId).OrderByDescending(x => x.DateCreated).Take(limit).ToList();
                         result["Description"] = records.Select(x => x.Description).Where(x => !string.IsNullOrWhiteSpace(x)).ToList();
                         extraFields = records.SelectMany(x => x.ExtraFields).ToList();
                     }
                     break;
                 case ImportMode.OdometerRecord:
                     {
-                        var records = _odometerRecordDataAccess.GetOdometerRecordsByVehicleId(vehicleId).OrderByDescending(x => x.Date).ThenByDescending(x => x.Mileage).ToList();
+                        var records = _odometerRecordDataAccess.GetOdometerRecordsByVehicleId(vehicleId).OrderByDescending(x => x.Date).ThenByDescending(x => x.Mileage).Take(limit).ToList();
                         tags = records.SelectMany(x => x.Tags).ToList();
                         extraFields = records.SelectMany(x => x.ExtraFields).ToList();
                     }
                     break;
             }
-            var distinctTags = tags.Where(x => !string.IsNullOrWhiteSpace(x)).Distinct().ToList();
+            var distinctTags = tags.Where(x => !string.IsNullOrWhiteSpace(x)).Distinct().Take(limit).ToList();
             if (distinctTags.Any())
             {
                 result["Tags"] = distinctTags;
