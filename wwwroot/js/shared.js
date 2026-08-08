@@ -735,7 +735,7 @@ function setDebounce(callBack) {
     clearTimeout(debounce);
     debounce = setTimeout(function () {
         callBack();
-    }, 1000);
+    }, 200);
 }
 function toggleSort(tabName, sender) {
     var sortColumn = sender.textContent;
