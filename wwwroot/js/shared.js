@@ -455,6 +455,20 @@ function initDatePicker(input, futureOnly) {
 }
 function initAutoComplete(importMode, container) {
     var vehicleId = GetVehicleId().vehicleId;
+    var descriptionInput = container.find("input[id$='Description']");
+    // Clear previous autocomplete
+    if (descriptionInput.length) {
+        var oldDropdown = descriptionInput.data('autocomplete-dropdown');
+
+        if (oldDropdown) {
+            oldDropdown.remove();
+            descriptionInput.removeData('autocomplete-dropdown');
+        }
+
+        descriptionInput.off('.autocomplete');
+        descriptionInput.removeAttr('list');
+    }
+
     $.get('/Vehicle/GetAutoCompleteValues', { vehicleId: vehicleId, importMode: importMode }, function (data) {
         if (!data) return;
         for (var key in data) {
@@ -514,6 +528,12 @@ var descriptionSeparatorTestRegex = /[.,;/|]\s+|\r?\n/;
 function bindCustomAutoComplete(input, values, options) {
     options = options || {};
     var multiItem = !!options.multiItem;
+
+    // Remove any existing autocomplete dropdown for this input
+    input.data('autocomplete-dropdown')?.remove();
+    // Remove existing handlers
+    input.off('.autocomplete');
+
     // Remove any existing datalist attachment and disable browser autofill
     // so the native suggestions don't overlap with our custom dropdown.
     input.removeAttr('list');
@@ -651,10 +671,6 @@ function bindCustomAutoComplete(input, values, options) {
                 activeIndex = -1;
             }
         });
-    // Clean up dropdown when modal closes
-    input.closest('.modal').off('hidden.bs.modal.autocomplete').on('hidden.bs.modal.autocomplete', function () {
-        dropdown.remove();
-    });
 }
 function initTagSelector(input, noDataList) {
     if (noDataList) {
