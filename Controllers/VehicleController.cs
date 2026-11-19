@@ -797,6 +797,11 @@ namespace CarCareTracker.Controllers
                     case ImportMode.ServiceRecord:
                         {
                             var existingRecord = _serviceRecordDataAccess.GetServiceRecordById(recordId);
+                            //security check
+                            if (existingRecord.VehicleId != vehicleData.Id)
+                            {
+                                continue;
+                            }
                             existingRecord.Mileage += int.Parse(vehicleData.OdometerDifference);
                             existingRecord.Mileage = decimal.ToInt32(existingRecord.Mileage * decimal.Parse(vehicleData.OdometerMultiplier, NumberStyles.Any));
                             result = _serviceRecordDataAccess.SaveServiceRecordToVehicle(existingRecord);
@@ -805,6 +810,11 @@ namespace CarCareTracker.Controllers
                     case ImportMode.RepairRecord:
                         {
                             var existingRecord = _collisionRecordDataAccess.GetCollisionRecordById(recordId);
+                            //security check
+                            if (existingRecord.VehicleId != vehicleData.Id)
+                            {
+                                continue;
+                            }
                             existingRecord.Mileage += int.Parse(vehicleData.OdometerDifference);
                             existingRecord.Mileage = decimal.ToInt32(existingRecord.Mileage * decimal.Parse(vehicleData.OdometerMultiplier, NumberStyles.Any));
                             result = _collisionRecordDataAccess.SaveCollisionRecordToVehicle(existingRecord);
@@ -813,6 +823,11 @@ namespace CarCareTracker.Controllers
                     case ImportMode.UpgradeRecord:
                         {
                             var existingRecord = _upgradeRecordDataAccess.GetUpgradeRecordById(recordId);
+                            //security check
+                            if (existingRecord.VehicleId != vehicleData.Id)
+                            {
+                                continue;
+                            }
                             existingRecord.Mileage += int.Parse(vehicleData.OdometerDifference);
                             existingRecord.Mileage = decimal.ToInt32(existingRecord.Mileage * decimal.Parse(vehicleData.OdometerMultiplier, NumberStyles.Any));
                             result = _upgradeRecordDataAccess.SaveUpgradeRecordToVehicle(existingRecord);
@@ -821,6 +836,11 @@ namespace CarCareTracker.Controllers
                     case ImportMode.GasRecord:
                         {
                             var existingRecord = _gasRecordDataAccess.GetGasRecordById(recordId);
+                            //security check
+                            if (existingRecord.VehicleId != vehicleData.Id)
+                            {
+                                continue;
+                            }
                             existingRecord.Mileage += int.Parse(vehicleData.OdometerDifference);
                             existingRecord.Mileage = decimal.ToInt32(existingRecord.Mileage * decimal.Parse(vehicleData.OdometerMultiplier, NumberStyles.Any));
                             result = _gasRecordDataAccess.SaveGasRecordToVehicle(existingRecord);
@@ -829,6 +849,11 @@ namespace CarCareTracker.Controllers
                     case ImportMode.OdometerRecord:
                         {
                             var existingRecord = _odometerRecordDataAccess.GetOdometerRecordById(recordId);
+                            //security check
+                            if (existingRecord.VehicleId != vehicleData.Id)
+                            {
+                                continue;
+                            }
                             existingRecord.Mileage += int.Parse(vehicleData.OdometerDifference);
                             existingRecord.Mileage = decimal.ToInt32(existingRecord.Mileage * decimal.Parse(vehicleData.OdometerMultiplier, NumberStyles.Any));
                             result = _odometerRecordDataAccess.SaveOdometerRecordToVehicle(existingRecord);
