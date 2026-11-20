@@ -252,6 +252,7 @@ function showAddReminderModal(reminderModalInput) {
             $("#reminderRecordModalContent").html(data);
             initDatePicker($('#reminderDate'), true);
             initTagSelector($("#reminderRecordTag"));
+            initAutoComplete(5, $("#reminderRecordModalContent"));
             $("#reminderRecordModal").modal("show");
         });
     } else {
@@ -260,6 +261,7 @@ function showAddReminderModal(reminderModalInput) {
             $("#reminderRecordModalContent").html(data);
             initDatePicker($('#reminderDate'), true);
             initTagSelector($("#reminderRecordTag"));
+            initAutoComplete(5, $("#reminderRecordModalContent"));
             $("#reminderRecordModal").modal("show");
         });
     }

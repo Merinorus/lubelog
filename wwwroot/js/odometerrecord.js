@@ -5,6 +5,7 @@
             //initiate datepicker
             initDatePicker($('#odometerRecordDate'));
             initTagSelector($("#odometerRecordTag"));
+            initAutoComplete(10, $("#odometerRecordModalContent"));
             $('#odometerRecordModal').modal('show');
         }
     });
@@ -28,6 +29,7 @@ function showEditOdometerRecordModal(odometerRecordId, nocache) {
             //initiate datepicker
             initDatePicker($('#odometerRecordDate'));
             initTagSelector($("#odometerRecordTag"));
+            initAutoComplete(10, $("#odometerRecordModalContent"));
             $('#odometerRecordModal').modal('show');
             bindModalInputChanges('odometerRecordModal');
             $('#odometerRecordModal').off('shown.bs.modal').on('shown.bs.modal', function () {

@@ -1,10 +1,28 @@
-﻿function showAddPlanRecordModal() {
+﻿function getPlanAutoCompleteMode() {
+    var selectedType = $("#planRecordType").val();
+    switch (selectedType) {
+        case "ServiceRecord":
+            return 0; // ServiceRecord
+        case "RepairRecord":
+            return 1; // RepairRecord
+        case "UpgradeRecord":
+            return 4; // UpgradeRecord
+        default:
+            return 0; // Default to service record when the modal is shown
+    }
+}
+
+function showAddPlanRecordModal() {
     $.get('/Vehicle/GetAddPlanRecordPartialView', function (data) {
         if (data) {
             $("#planRecordModalContent").html(data);
             //initiate datepicker
             initDatePicker($('#planRecordDate'));
             $('#planRecordModal').modal('show');
+            initAutoComplete(getPlanAutoCompleteMode(), $("#planRecordModalContent"));
+            $("#planRecordType").on("change", function() {
+                initAutoComplete(getPlanAutoCompleteMode(), $("#planRecordModalContent"));
+            });
         }
     });
 }
@@ -33,6 +51,10 @@ function showEditPlanRecordModal(planRecordId, nocache) {
                 if (getGlobalConfig().useMarkDown) {
                     toggleMarkDownOverlay("planRecordNotes");
                 }
+            });
+            initAutoComplete(getPlanAutoCompleteMode(), $("#planRecordModalContent"));
+            $("#planRecordType").on("change", function() {
+                initAutoComplete(getPlanAutoCompleteMode(), $("#planRecordModalContent"));
             });
         }
     });
